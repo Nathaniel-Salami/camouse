@@ -1,10 +1,12 @@
 package camouse;
 
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.opencv.core.Core;
 
 public class Camouse extends Application {
@@ -24,6 +26,13 @@ public class Camouse extends Application {
             primaryStage.setScene(scene);
             // show the GUI
             primaryStage.show();
+
+            CamouseController controller = loader.getController();
+            primaryStage.setOnCloseRequest((new EventHandler<WindowEvent>() {
+                public void handle(WindowEvent we) {
+                    controller.onClose();
+                }
+            }));
         } catch (Exception e) {
             e.printStackTrace();
         }
