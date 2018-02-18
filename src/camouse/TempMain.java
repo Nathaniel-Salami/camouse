@@ -40,12 +40,20 @@ public class TempMain {
 				cY = 0;
 		
 		screenRez = new float[2];
+
 				camRez = new float[2];
 				scale = new float[2];
 				negligible = new float[2];
 				init = new float[2];
+
+		camRez = new float[2];
+		scale = new float[2];
+		negligible = new float[2];
+		init = new float[2];
+
 		
-		dangerMouse = new ScrollEventTest(x, y);
+		dangerMouse = new ScrollEventTest();
+		dangerMouse.init(x, y);
 		
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		
@@ -55,6 +63,8 @@ public class TempMain {
 		screenRez[1] = (float) screenSize.getHeight();
 		camRez[0] = camX;
 		camRez[1] = camY;
+        System.out.println("Scren Resolution x " + screenRez[0] + "Screen Resolution y " + screenRez[1]);
+        System.out.println("Camera x: " + camRez[0] + "Camera y: " + camRez[1]);
 		scale[0] = screenRez[0]/camRez[0];
 		scale[1] = screenRez[1]/camRez[1];
 		

@@ -36,7 +36,7 @@ public class CamouseController {
     private long theTime;
     private long timeElapsed;
 
-    private boolean isClicking;
+    private boolean isClicked;
 
     //member vars
     private Mat currentFrame;
@@ -84,10 +84,14 @@ public class CamouseController {
 
     // a timer for acquiring the video stream
     private ScheduledExecutorService timer;
+
+    private ScrollEventTest scrollTest;
+
     // the OpenCV object that performs the video capture
     private VideoCapture capture = new VideoCapture();
     // a flag to change the button behavior
     private boolean cameraActive;
+    private Long startTime=null;
     private TempMain tempMain;
 
     // property for object binding
@@ -365,43 +369,57 @@ public class CamouseController {
         if(isCalibrated) {
             //tempMain.update((float) (currentPosition[INDEX_FINGER].x), (float) (currentPosition[INDEX_FINGER].y));
 
-            ScrollEventTest scrollTest = new ScrollEventTest((float)(initialPosition[INDEX_FINGER].x), (float)(initialPosition[INDEX_FINGER].y));
+            scrollTest = new ScrollEventTest();
+            scrollTest.init((float)(initialPosition[INDEX_FINGER].x), (float)(initialPosition[INDEX_FINGER].y));
             float[] diff = scale();
             scrollTest.mouseMovement(diff[0], diff[1]);
 
             if(!isThumbExtended()) {
-                cases();
+                startTime = initialTime();
+                /*System.out.println("Thumb is NOT extended");
+                System.out.println("left click");*/
+            }else{
+                //System.out.println("Thumb is extended");
+                //System.out.println("START TIME: " + startTime);
+                if(isClicked && (startTime!=null)){
+                    Long currentTime = System.nanoTime();
+                    timeElapsed = currentTime - startTime;
+
+                    System.out.println("Time Elapsed: " + timeElapsed);
+
+                    if(timeElapsed > 40000000){
+                        System.out.println("right click");
+                        startTime=null;
+                        isClicked=false;
+                        scrollTest.rightClick();
+                        return;
+                    }else {
+                        System.out.println("left click");
+                        scrollTest.singleClick();
+                        startTime=null;
+                        return;
+                    }
+
+                }
             }
         }
         //reduceFingerTips(frame);
     }
 
-    private void cases(){
-        isClicking = false;
+    private Long initialTime(){
+        isClicked = true;
 
-        if(!isThumbExtended() && !isClicking){
-            //pointer
-            isClicking = true;
+        if(!isThumbExtended() && isClicked){
             //System.out.println("POINTING");
-            theTime = System.nanoTime();
+            //theTime = System.nanoTime();
+            return System.nanoTime();
         }
-        Long currentTime = System.nanoTime();
-        timeElapsed = currentTime - theTime;
 
-        System.out.println("Time Elapsed: " + timeElapsed);
+        return null;
 
-        if(timeElapsed < 600000000 && isThumbExtended()){
-            System.out.println("left click");
-            isClicking=false;
-        }else if((timeElapsed > 600000000 && timeElapsed < 2000000000) && isThumbExtended()) {
-            System.out.println("right click");
-            isClicking=false;
-        }else if(timeElapsed>2000000000 && !isThumbExtended()){
+        /*else if(timeElapsed>2000000000 && !isThumbExtended()){
             System.out.println("drag");
-        }else{
-            isClicking=false;
-            return;
-        }
+        }*/
 
         /*if (timeElapsed > 2000000000) {
             System.out.println("drag");

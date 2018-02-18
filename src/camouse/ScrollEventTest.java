@@ -8,13 +8,15 @@ public class ScrollEventTest {
     private int initialX;
     private int initialY;
 
-    public ScrollEventTest(float x, float y){
+    public ScrollEventTest(){
         try {
             this.robot = new Robot();  
         } catch (AWTException e) {
             e.printStackTrace();
         }
-        
+    }
+
+    public void init(float x, float y){
         this.initialX = (int)x;
         this.initialY = (int)y;
     }
@@ -53,7 +55,19 @@ public class ScrollEventTest {
     public void mouseMovement(float differenceX, float differenceY){
         //p = MouseInfo.getPointerInfo().getLocation();
         //robot.mouseMove(p.x+differenceX, p.y+differenceY);
-        this.robot.mouseMove((int)(initialX+differenceX), (int)(initialY+differenceY));
+        int myAdditionX=0;
+        int myAdditionY=0;
+
+        if(Math.abs(differenceX)>3){
+            myAdditionX=(int)differenceX;
+        }
+        if(Math.abs(differenceY)>3){
+            myAdditionY=(int)differenceY;
+        }
+
+        //this.robot.mouseMove((int)(initialX+differenceX), (int)(initialY+differenceY));
+
+        this.robot.mouseMove(initialX+myAdditionX, initialY+myAdditionY);
     }
     
 }

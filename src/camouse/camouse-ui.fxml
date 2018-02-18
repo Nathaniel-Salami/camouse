@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/8.0.72" xmlns:fx="http://javafx.com/fxml/1" fx:controller="camouse.CamouseController">
+<BorderPane xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="camouse.CamouseController">
    <right>
       <VBox alignment="CENTER" spacing="10">
          <padding>
@@ -21,11 +21,11 @@
          <Label text="Hue Stop" />
          <Slider fx:id="hueEnd" blockIncrement="1" max="180" min="0" value="180.0" />
          <Label text="Saturation Start" />
-         <Slider fx:id="saturationStart" blockIncrement="1" max="255" min="0" />
+         <Slider fx:id="saturationStart" blockIncrement="1" max="255" min="0" value="62.73809523809525" />
          <Label text="Saturation Stop" />
-         <Slider fx:id="saturationEnd" blockIncrement="1" max="255" min="0" value="250.0" />
+         <Slider fx:id="saturationEnd" blockIncrement="1" max="255" min="0" value="180.1190476190476" />
          <Label text="Value Start" />
-         <Slider fx:id="valueStart" blockIncrement="1" max="255" min="0" />
+         <Slider fx:id="valueStart" blockIncrement="1" max="255" min="0" value="163.92857142857144" />
          <Label text="Value Stop" />
          <Slider fx:id="valueEnd" blockIncrement="1" max="255" min="0" value="255" />
       </VBox>
