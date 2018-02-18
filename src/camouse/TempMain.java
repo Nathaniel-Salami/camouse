@@ -31,6 +31,11 @@ public class TempMain {
 	
 	
 	public TempMain(float x, float y, float camX, float camY) {
+		
+		iX = iY = 0;
+		tX = tY = 0;
+		cX = cY = 0;
+		
 		screenRez = camRez = scale = negligible = init = new float[2];
 		
 		dangerMouse = new ScrollEventTest(x, y);
@@ -48,6 +53,12 @@ public class TempMain {
 		
 		negligible[0] = camRez[0]/100;
 		negligible[0] = camRez[0]/100;
+		
+		curState = 2;
+		prevState = 0;
+		
+		prevStateTime = 0;
+		curStateTime = System.nanoTime();
 	}
 	
 	//drag
@@ -120,6 +131,11 @@ public class TempMain {
 		if (tCheck && !iCheck) { //thumb is not visible
 			curState = 1;			//click/drag mode
 			curStateTime = System.nanoTime();
+			
+			tX = tY = cX = cY = 0;
+			iX = curX;
+			iY = curY;
+			
 			click(curX, curY);
 		}
 		else if (tCheck && iCheck){ //index and thumb are not visible
@@ -135,6 +151,9 @@ public class TempMain {
 			curState = 2;			//pointer mode
 			curStateTime = System.nanoTime();
 			moveBy(curX, curY);
+
+			iX = curX;
+			iY = curY;
 		}
 		
 		//update tX/Y, iX/Y, cX/Y
