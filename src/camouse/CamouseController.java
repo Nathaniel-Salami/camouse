@@ -36,8 +36,6 @@ public class CamouseController {
     private long theTime;
     private long timeElapsed;
 
-    private boolean isClicking;
-
     //member vars
     private Mat currentFrame;
     List<Point> startPoints = new ArrayList<>();
@@ -94,18 +92,21 @@ public class CamouseController {
     private ObjectProperty<String> hsvValuesProp;
 
     public boolean isCalibrated = false;
+
     /*
     PUBLIC API
      */
+    private boolean _isThumbExtended = false;
     public boolean isThumbExtended() {
-        return currentPosition[THUMB].x < 0;
+        return _isThumbExtended;
+        //return currentPosition[THUMB].x < 0;
     }
 
-    public Point getCurrentPosition(int fingerId){
+    public Point getCurrentPosition(int fingerId) {
         return currentPosition[fingerId];
     }
 
-    public Point getDisplacement(int fingerId){
+    public Point getDisplacement(int fingerId) {
         return new Point(currentPosition[fingerId].x - initialPosition[fingerId].x,
           currentPosition[fingerId].y - initialPosition[fingerId].y);
     }
@@ -114,18 +115,18 @@ public class CamouseController {
      */
 
     @FXML
-    private void calibrateInitial(){
-        if(this.cameraActive){
+    private void calibrateInitial() {
+        if (this.cameraActive) {
             initialPosition[INDEX_FINGER] = currentPosition[INDEX_FINGER].clone();
-            if(isThumbExtended()){
+            if (isThumbExtended()) {
                 initialPosition[THUMB] = currentPosition[THUMB].clone();
             }
             /*tempMain.init[0]= (float)(initialPosition[INDEX_FINGER].x);
             tempMain.init[0]= (float)(float)(initialPosition[INDEX_FINGER].y);*/
-            tempMain = new TempMain((float)(initialPosition[INDEX_FINGER].x), (float)(initialPosition[INDEX_FINGER].y),cameraX,cameraY);
+            tempMain = new TempMain((float) (initialPosition[INDEX_FINGER].x), (float) (initialPosition[INDEX_FINGER].y), cameraX, cameraY);
             System.out.println("INITIAL: " + initialPosition[INDEX_FINGER]);
             isCalibrated = true;
-        }else{
+        } else {
             System.err.println("ERROR! Please activate the mouse before calibration");
         }
     }
@@ -180,11 +181,11 @@ public class CamouseController {
         }
 
         //detect click
-       //i(!isThumbExtended() && !isClicking){
-            //pointer
-            //isClicking = true;
-            //System.out.println("POINTING");
-            //theTime = System.nanoTime();
+        //i(!isThumbExtended() && !isClicking){
+        //pointer
+        //isClicking = true;
+        //System.out.println("POINTING");
+        //theTime = System.nanoTime();
         //
     }
 
@@ -325,7 +326,8 @@ public class CamouseController {
         }
         Point topMostPoint = new Point(convexHullPoints.get(topMostPointIndex, 0));
         Imgproc.circle(frame, topMostPoint, 10, new Scalar(0, 255, 0), 3);
-        currentPosition[THUMB] = new Point(-1,-1);
+        _isThumbExtended = false;
+        currentPosition[THUMB] = new Point(-1, -1);
         currentPosition[INDEX_FINGER] = topMostPoint.clone();
 
         //draw hull
@@ -349,94 +351,120 @@ public class CamouseController {
             Point defectEndPoint = new Point(defectEndCoords);
             Point valleyPoint = new Point(valleyCoods);
 
-            double depth = defects.get(i, 0)[3]/256;
+            double depth = defects.get(i, 0)[3] / 256;
 
             Imgproc.circle(frame, defectStartPoint, 10, new Scalar(0, 0, 255), 3);
+            _isThumbExtended = true;
             currentPosition[THUMB] = defectStartPoint.clone();
             //Imgproc.circle(frame, defectEndPoint, 10, new Scalar(0, 255, 0), 3);
-            if(depth < MIN_FINGER_DEPTH){
-                continue;
-            }
+//            if (depth < MIN_FINGER_DEPTH) {
+//                continue;
+//            }
             startPoints.add(defectStartPoint);
             valleyPoints.add(valleyPoint);
             depths.add(depth);
         }
 
-        if(isCalibrated) {
-            //tempMain.update((float) (currentPosition[INDEX_FINGER].x), (float) (currentPosition[INDEX_FINGER].y));
+        if (isCalibrated) {
+            scroller.init((float) (currentPosition[INDEX_FINGER].x), (float) (currentPosition[INDEX_FINGER].y));
+//            tempMain.update((float) (currentPosition[INDEX_FINGER].x), (float) (currentPosition[INDEX_FINGER].y));
+////
+//            ScrollEventTest scrollTest = new ScrollEventTest((float) (initialPosition[INDEX_FINGER].x), (float) (initialPosition[INDEX_FINGER].y));
+//            float[] diff = scale();
 
-            ScrollEventTest scrollTest = new ScrollEventTest((float)(initialPosition[INDEX_FINGER].x), (float)(initialPosition[INDEX_FINGER].y));
-            float[] diff = scale();
-            scrollTest.mouseMovement(diff[0], diff[1]);
+              scroller.mouseMovement((float)getDisplacement(INDEX_FINGER).x, (float)getDisplacement(INDEX_FINGER).y);
 
-            if(!isThumbExtended()) {
+//            if (!isThumbExtended()) {
                 cases();
+//            }
+        }
+        reduceFingerTips(frame);
+    }
+
+    ScrollEventTest scroller = new ScrollEventTest();
+
+    private boolean isClicking = false;
+    private boolean isDragging = false;
+    long clickStart;
+    long clickEnd;
+    long clickElapsed;
+
+
+    boolean mousePress = false;
+    private void cases() {
+
+        if(!isThumbExtended() && !mousePress){
+            mousePress = true;
+            clickStart = System.currentTimeMillis();
+        }
+        if(!isThumbExtended() && mousePress){
+            clickEnd = System.currentTimeMillis();
+        }
+        if(isThumbExtended() &&  mousePress){
+            mousePress = false;
+            clickElapsed = clickEnd - clickStart;
+            if(clickElapsed > 2000){
+                System.out.println("Right Click");
+                scroller.rightClick();
+            }
+            else if(clickElapsed > 200){
+                System.out.println("Left Click");
+                scroller.singleClick();
             }
         }
-        //reduceFingerTips(frame);
+        if(isThumbExtended() && !mousePress){
+
+        }
+
+//
+//        System.out.println("Thumb extended:" + isThumbExtended());
+//        if (!isThumbExtended() && !isClicking) {
+//            isClicking = true;
+//            clickStart = System.currentTimeMillis();
+//            return;
+//        }
+//
+//        clickElapsed = System.currentTimeMillis() - clickStart;
+//        System.out.println("elapsed " + clickElapsed );
+//        if (clickElapsed > 4000 && !isThumbExtended() && !isDragging) {
+//            isDragging = true;
+//            System.out.println("Drag Start");
+//            return;
+//        }
+//
+//        if (isThumbExtended()) {
+//            if (isDragging) {
+//                isDragging = false;
+//                isClicking = false;
+//
+//                System.out.println("Drag End");
+//                return;
+//            }
+//            if (clickElapsed > 2000) {
+//                System.out.println("Right Click");
+//            } else if (clickElapsed > 500) {
+//                System.out.println("Left Click");
+//            }
+//            isClicking = false;
+//            return;
+//        }
+//
+//        isClicking = false;
     }
 
-    private void cases(){
-        isClicking = false;
 
-        if(!isThumbExtended() && !isClicking){
-            //pointer
-            isClicking = true;
-            //System.out.println("POINTING");
-            theTime = System.nanoTime();
-        }
-        Long currentTime = System.nanoTime();
-        timeElapsed = currentTime - theTime;
-
-        System.out.println("Time Elapsed: " + timeElapsed);
-
-        if(timeElapsed < 600000000 && isThumbExtended()){
-            System.out.println("left click");
-            isClicking=false;
-        }else if((timeElapsed > 600000000 && timeElapsed < 2000000000) && isThumbExtended()) {
-            System.out.println("right click");
-            isClicking=false;
-        }else if(timeElapsed>2000000000 && !isThumbExtended()){
-            System.out.println("drag");
-        }else{
-            isClicking=false;
-            return;
-        }
-
-        /*if (timeElapsed > 2000000000) {
-            System.out.println("drag");
-        }
-            else if(timeElapsed > 600000000) {
-            System.out.println("right click");
-        }
-        else {
-            System.out.println("left click");
-        }*/
-
-
-        /*if(isThumbExtended() && isClicking){
-            Long timeEnd = System.nanoTime();
-            isClicking = false;
-        }
-        else{
-            //if (system)
-            //System.out.println("OTHER")
-
-        }*/
-    }
-
-    private float[] scale(){
+    private float[] scale() {
         float[] diff = new float[2];
         float iX = (float) initialPosition[INDEX_FINGER].x;
         float iY = (float) initialPosition[INDEX_FINGER].y;
-        float cX = (float)currentPosition[INDEX_FINGER].x;
-        float cY = (float)currentPosition[INDEX_FINGER].y;
+        float cX = (float) currentPosition[INDEX_FINGER].x;
+        float cY = (float) currentPosition[INDEX_FINGER].y;
 
         //float diffX = (float)(initialPosition[INDEX_FINGER].x)-(float)(currentPosition[INDEX_FINGER].x);
         //float diffY =(float)(initialPosition[INDEX_FINGER].y)-(float)(currentPosition[INDEX_FINGER].y);
 
-        diff[0] = (cX - iX)*tempMain.scale[0];
-        diff[1] = (cY - iY)*tempMain.scale[1];
+        diff[0] = (cX - iX) * tempMain.scale[0];
+        diff[1] = (cY - iY) * tempMain.scale[1];
 
         return diff;
     }
@@ -458,7 +486,7 @@ public class CamouseController {
             if (angle > MAX_FINGER_ANGLE) continue;
 
             fingerPoints.add(startPoints.get(i));
-            Imgproc.circle(frame, startPoints.get(i), 10, new Scalar(0, 255, 0), 2);
+//            Imgproc.circle(frame, startPoints.get(i), 10, new Scalar(0, 255, 0), 2);
 
         }
     }

@@ -8,13 +8,17 @@ public class ScrollEventTest {
     private int initialX;
     private int initialY;
 
-    public ScrollEventTest(float x, float y){
+    public ScrollEventTest(){
         try {
-            this.robot = new Robot();  
+            this.robot = new Robot();
+            robot.setAutoWaitForIdle(true);
+            robot.setAutoDelay(50);
         } catch (AWTException e) {
             e.printStackTrace();
         }
-        
+    }
+
+    public void init(float x, float y){
         this.initialX = (int)x;
         this.initialY = (int)y;
     }
