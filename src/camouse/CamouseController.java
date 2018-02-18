@@ -37,10 +37,8 @@ public class CamouseController {
     List<Point> valleyPoints = new ArrayList<>();
     List<Point> endPoints = new ArrayList<>();
     List<Double> depths = new ArrayList<>();
-    private Point[] initialPosition = {new Point(), new Point()};
+    private Point[] initialPosition = {new Point(-1, -1), new Point(-1, -1)};
     private Point[] currentPosition = new Point[2];
-    private boolean _isThumbExtended;
-
 
     // FXML camera button
     @FXML
@@ -87,33 +85,33 @@ public class CamouseController {
     // property for object binding
     private ObjectProperty<String> hsvValuesProp;
 
-
-    //Public API
-    public Point getFingerPosition(int fingerId){
-        return currentPosition[fingerId].clone();
+    /*
+    PUBLIC API
+     */
+    public boolean isThumbExtended() {
+        return currentPosition[THUMB].x < 0;
     }
 
-    public Point getMovement(int fingerId) {
+    public Point getCurrentPosition(int fingerId){
+        return currentPosition[fingerId];
+    }
+
+    public Point getDisplacement(int fingerId){
         return new Point(currentPosition[fingerId].x - initialPosition[fingerId].x,
           currentPosition[fingerId].y - initialPosition[fingerId].y);
     }
+    /*
+    END OF PUBLIC API
+     */
 
-
-    public boolean isThumbExtended() {
-        return _isThumbExtended;
-    }
-
-    //private methods
     @FXML
-    private void calibrateInitial() throws Exception {
-        if(currentPosition[THUMB] == null){
-            throw new Exception("Cannot detect thumb. Cannot calibrate");
-        }
-        initialPosition[THUMB] = currentPosition[THUMB].clone();
+    private void calibrateInitial(){
         initialPosition[INDEX_FINGER] = currentPosition[INDEX_FINGER].clone();
-        Imgproc.circle(currentFrame, initialPosition[INDEX_FINGER], 5, new Scalar(100,100,100), 4);
+        if(isThumbExtended()){
+            initialPosition[THUMB] = currentPosition[THUMB].clone();
+        }
+        System.out.print("INITIAL: " + initialPosition[INDEX_FINGER]);
     }
-
 
     @FXML
     private void startCamera() {
@@ -140,17 +138,9 @@ public class CamouseController {
                 Runnable frameGrabber = () -> {
                     // effectively grab and process a single frame
                     this.currentFrame = grabFrame();
-
-//                    Imgproc.circle(currentFrame, currentPosition[INDEX_FINGER], 10, new Scalar(0,0,250), 3);
-//                    if(isThumbExtended()){
-//                        Imgproc.circle(currentFrame, currentPosition[THUMB], 10, new Scalar(0,0,250), 3);
-//                    }
-
                     // convert and show the frame
                     Image imageToShow = CamouseController.mat2Image(this.currentFrame);
                     updateImageView(originalImageView, imageToShow);
-
-
                 };
                 this.timer = Executors.newSingleThreadScheduledExecutor();
                 this.timer.scheduleAtFixedRate(frameGrabber, 0, 33, TimeUnit.MILLISECONDS);
@@ -172,47 +162,6 @@ public class CamouseController {
         }
     }
 
-    private Point getTopMostPoint(MatOfPoint contour, MatOfInt convexHullIndices, MatOfPoint convexHullPoints) {
-        double topMostPointY = Double.POSITIVE_INFINITY;
-        int topMostPointIndex = -1;
-        for (int i = 0; i < convexHullIndices.size().height; i++) {
-            int index = (int) convexHullIndices.get(i, 0)[0];
-            double[] point = new double[]{
-              contour.get(index, 0)[0], contour.get(index, 0)[1]
-            };
-            if (point[1] < topMostPointY) {
-                topMostPointY = point[1];
-                topMostPointIndex = i;
-            }
-            convexHullPoints.put(i, 0, point);
-        }
-        return new Point(convexHullPoints.get(topMostPointIndex, 0));
-    }
-
-    private List<Point> reduceFingerTips() {
-        ArrayList<Point> fingerPoints = new ArrayList<>();
-        float MIN_FINGER_DEPTH = 10;
-        float MAX_FINGER_ANGLE = 60;
-        int numOfPoints = startPoints.size();
-        for (int i = 0; i < numOfPoints; i++) {
-            if (depths.get(i) < MIN_FINGER_DEPTH) continue;
-
-            int prevIndex = (i == 0) ? (numOfPoints - 1) : (i - 1);
-            int nextIndex = (i == numOfPoints - 1) ? 0 : (i + 1);
-            int angle = angleBetween(startPoints.get(i), valleyPoints.get(prevIndex), valleyPoints.get(nextIndex));
-
-            if (angle > MAX_FINGER_ANGLE) continue;
-
-            fingerPoints.add(startPoints.get(i));
-        }
-        return fingerPoints;
-    }
-
-    private void drawConvexHull(MatOfPoint contour) {
-        List<MatOfPoint> list = new ArrayList<>();
-        list.add(contour);
-        Imgproc.drawContours(this.currentFrame, list, 0, new Scalar(0, 255, 0), 3);
-    }
 
     private Mat grabFrame() {
         this.currentFrame = new Mat();
@@ -221,6 +170,7 @@ public class CamouseController {
             try {
                 // read the current this.currentFrame
                 this.capture.read(this.currentFrame);
+//                System.out.print("Resolution: " + this.currentFrame.width() + "," + this.currentFrame.height());
                 // if the this.currentFrame is not empty, process it
                 if (!this.currentFrame.empty()) {
                     // init
@@ -242,6 +192,7 @@ public class CamouseController {
                     Scalar maxValues = new Scalar(this.hueEnd.getValue(), this.saturationEnd.getValue(),
                       this.valueEnd.getValue());
 
+//                    System.out.println("MIN" + minValues);
                     // show the current selected HSV range
                     String valuesToPrint = "Hue range: " + minValues.val[0] + "-" + maxValues.val[0]
                       + "\tSaturation range: " + minValues.val[1] + "-" + maxValues.val[1] + "\tValue range: "
@@ -318,70 +269,98 @@ public class CamouseController {
     }
 
     private void findFingerTips(MatOfPoint contour, Mat frame) {
-        //Approximate contour
+//        maybe use approx contour;
         MatOfPoint2f contourFloat = new MatOfPoint2f(contour.toArray());
         MatOfPoint2f approxContour = new MatOfPoint2f();
-        double epsilon = CONTOUR_APPROX_FACTOR * Imgproc.arcLength(contourFloat, false);
+        double epsilon = 0.05 * Imgproc.arcLength(contourFloat, false);
         Imgproc.approxPolyDP(contourFloat, approxContour, epsilon, true);
         contour = new MatOfPoint(approxContour.toArray());
 
-        //calculate convex hull
+
         MatOfInt convexHullIndices = new MatOfInt();
+        MatOfInt4 defects = new MatOfInt4();
         Imgproc.convexHull(contour, convexHullIndices, false);
+
         MatOfPoint convexHullPoints = new MatOfPoint();
         convexHullPoints.create((int) convexHullIndices.size().height, 1, CvType.CV_32SC2);
-        //draw convex hull
-        drawConvexHull(convexHullPoints);
 
-
-        //detect contour defects (valleys)
-        MatOfInt4 defects = new MatOfInt4();
-        Imgproc.convexityDefects(contour, convexHullIndices, defects);
-
-        //set index finger
-        Point topMostPoint = getTopMostPoint(contour, convexHullIndices, convexHullPoints);
+        double topMostPointY = Double.POSITIVE_INFINITY;
+        int topMostPointIndex = -1;
+        for (int i = 0; i < convexHullIndices.size().height; i++) {
+            int index = (int) convexHullIndices.get(i, 0)[0];
+            double[] point = new double[]{
+              contour.get(index, 0)[0], contour.get(index, 0)[1]
+            };
+            if (point[1] < topMostPointY) {
+                topMostPointY = point[1];
+                topMostPointIndex = i;
+            }
+            convexHullPoints.put(i, 0, point);
+        }
+        Point topMostPoint = new Point(convexHullPoints.get(topMostPointIndex, 0));
+        Imgproc.circle(frame, topMostPoint, 10, new Scalar(0, 255, 0), 3);
+        currentPosition[THUMB] = new Point(-1,-1);
         currentPosition[INDEX_FINGER] = topMostPoint.clone();
 
+        //draw hull
+        ArrayList<MatOfPoint> hullList = new ArrayList<>();
+        hullList.add(0, convexHullPoints);
+        Imgproc.drawContours(frame, hullList, 0, new Scalar(0, 255, 0), 3);
+
+        Imgproc.convexityDefects(contour, convexHullIndices, defects);
+        startPoints.clear();
+        valleyPoints.clear();
+        depths.clear();
         long numDefects = defects.total();
-        //if no defects, thumb position is null
-        if (numDefects == 0) {
-            _isThumbExtended = false;
-            currentPosition[THUMB] = null;
-        }
-        else { //otherwise we have to calculate thumb position  using defect
-            _isThumbExtended = true;
-            //update defect start, bottom, and end positions + update defect depth
-            startPoints.clear();
-            valleyPoints.clear();
-            depths.clear();
-            for (int i = 0; i < numDefects; i++) {
-                double[] defectStartCoords = contour.get((int) Math.round(defects.get(i, 0)[0]), 0);
-                double[] valleyCoods = contour.get((int) Math.round(defects.get(i, 0)[2]), 0);
-                double[] defectEndCoords = contour.get((int) Math.round(defects.get(i, 0)[1]), 0);
-                Point defectStartPoint = new Point(defectStartCoords);
-                Point valleyPoint = new Point(valleyCoods);
-                Point defectEndPoint = new Point(defectEndCoords);
-                double depth = defects.get(i, 0)[2];
+        float MIN_FINGER_DEPTH = 90;
 
-                startPoints.add(defectStartPoint);
-                valleyPoints.add(valleyPoint);
-                endPoints.add(defectEndPoint);
-                depths.add(depth);
+//        System.out.println("DEFECT: " + defects.total());
+        for (int i = 0; i < defects.total(); i++) {
+            double[] defectStartCoords = contour.get((int) Math.round(defects.get(i, 0)[0]), 0);
+            double[] defectEndCoords = contour.get((int) Math.round(defects.get(i, 0)[1]), 0);
+            double[] valleyCoods = contour.get((int) Math.round(defects.get(i, 0)[2]), 0);
+            Point defectStartPoint = new Point(defectStartCoords);
+            Point defectEndPoint = new Point(defectEndCoords);
+            Point valleyPoint = new Point(valleyCoods);
+
+            double depth = defects.get(i, 0)[3]/256;
+
+            Imgproc.circle(frame, defectStartPoint, 10, new Scalar(0, 0, 255), 3);
+            currentPosition[THUMB] = defectStartPoint.clone();
+            //Imgproc.circle(frame, defectEndPoint, 10, new Scalar(0, 255, 0), 3);
+            if(depth < MIN_FINGER_DEPTH){
+                continue;
             }
+            startPoints.add(defectStartPoint);
+            valleyPoints.add(valleyPoint);
+            depths.add(depth);
+        }
 
-            currentPosition[THUMB] = startPoints.get(0).clone();
+        //reduceFingerTips(frame);
+    }
 
-//            //reduce doesn't work
-//            List<Point> reducedList = reduceFingerTips();
-//            if(reducedList.size() ==0){
-//                _isThumbExtended = false;
-//                currentPosition[THUMB] = null;
-//            }
-//            else{
-//                currentPosition[THUMB] = reduceFingerTips().get(0).clone();
-//            }
+    private void reduceFingerTips(Mat frame) {
+        ArrayList<Point> fingerPoints = new ArrayList<>();
+        float MIN_FINGER_DEPTH = 10;
+        float MAX_FINGER_ANGLE = 60;
+        int numOfPoints = startPoints.size();
+        for (int i = 0; i < numOfPoints; i++) {
+//            System.out.println("depth " + i + ": " + depths.get(i));
+            if (depths.get(i) < MIN_FINGER_DEPTH) continue;
+
+            int prevIndex = (i == 0) ? (numOfPoints - 1) : (i - 1);
+            int nextIndex = (i == numOfPoints - 1) ? 0 : (i + 1);
+            int angle = angleBetween(startPoints.get(i), valleyPoints.get(prevIndex), valleyPoints.get(nextIndex));
+//            System.out.println("angle " + i + ": " + angle);
+
+            if (angle > MAX_FINGER_ANGLE) continue;
+
+            fingerPoints.add(startPoints.get(i));
+            Imgproc.circle(frame, startPoints.get(i), 10, new Scalar(0, 255, 0), 2);
+
         }
     }
+
 
     private int angleBetween(Point tip, Point next, Point prev) {
         return Math.abs((int) Math.round(
@@ -389,6 +368,7 @@ public class CamouseController {
             Math.atan2(next.x - tip.x, next.y - tip.y) -
               Math.atan2(prev.x - tip.x, prev.y - tip.y))));
     }
+
 
     private void imageViewProperties(ImageView image, int dimension) {
         // set a fixed width for the given ImageView
@@ -442,7 +422,7 @@ public class CamouseController {
 
     private static BufferedImage matToBufferedImage(Mat original) {
         // init
-        BufferedImage image;
+        BufferedImage image = null;
         int width = original.width(), height = original.height(), channels = original.channels();
         byte[] sourcePixels = new byte[width * height * channels];
         original.get(0, 0, sourcePixels);
