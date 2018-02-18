@@ -117,15 +117,21 @@ public class CamouseController {
     @FXML
     private void calibrateInitial() {
         if (this.cameraActive) {
-            initialPosition[INDEX_FINGER] = currentPosition[INDEX_FINGER].clone();
-            if (isThumbExtended()) {
-                initialPosition[THUMB] = currentPosition[THUMB].clone();
+
+            if(currentPosition[INDEX_FINGER] != null){
+                initialPosition[INDEX_FINGER] = currentPosition[INDEX_FINGER].clone();
+                if (isThumbExtended()) {
+                    initialPosition[THUMB] = currentPosition[THUMB].clone();
+                }
+                /*tempMain.init[0]= (float)(initialPosition[INDEX_FINGER].x);
+                tempMain.init[0]= (float)(float)(initialPosition[INDEX_FINGER].y);*/
+                tempMain = new TempMain((float) (initialPosition[INDEX_FINGER].x), (float) (initialPosition[INDEX_FINGER].y), cameraX, cameraY);
+                //System.out.println("INITIAL: " + initialPosition[INDEX_FINGER]);
+                isCalibrated = true;
+            }else{
+                System.err.println("ERROR! Nothing detected!! Please position the selected glove in front of the camera...");
             }
-            /*tempMain.init[0]= (float)(initialPosition[INDEX_FINGER].x);
-            tempMain.init[0]= (float)(float)(initialPosition[INDEX_FINGER].y);*/
-            tempMain = new TempMain((float) (initialPosition[INDEX_FINGER].x), (float) (initialPosition[INDEX_FINGER].y), cameraX, cameraY);
-            System.out.println("INITIAL: " + initialPosition[INDEX_FINGER]);
-            isCalibrated = true;
+
         } else {
             System.err.println("ERROR! Please activate the mouse before calibration");
         }
@@ -412,9 +418,9 @@ public class CamouseController {
                 scroller.singleClick();
             }
         }
-        if(isThumbExtended() && !mousePress){
+        /*if(isThumbExtended() && !mousePress){
 
-        }
+        }*/
 
 //
 //        System.out.println("Thumb extended:" + isThumbExtended());
