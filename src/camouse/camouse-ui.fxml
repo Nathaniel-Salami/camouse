@@ -10,24 +10,24 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.72" fx:controller="camouse.CamouseController">
+<BorderPane xmlns="http://javafx.com/javafx/8.0.72" xmlns:fx="http://javafx.com/fxml/1" fx:controller="camouse.CamouseController">
    <right>
       <VBox alignment="CENTER" spacing="10">
          <padding>
             <Insets left="10" right="10" />
          </padding>
          <Label text="Hue Start" />
-         <Slider fx:id="hueStart" blockIncrement="1" max="180" min="0" value="110.0" />
+         <Slider fx:id="hueStart" blockIncrement="1" max="180" min="0" value="115.7143" />
          <Label text="Hue Stop" />
-         <Slider fx:id="hueStop" blockIncrement="1" max="180" min="0" value="130.0" />
+         <Slider fx:id="hueEnd" blockIncrement="1" max="180" min="0" value="180.0" />
          <Label text="Saturation Start" />
-         <Slider fx:id="saturationStart" blockIncrement="1" max="255" min="0" value="50.0" />
+         <Slider fx:id="saturationStart" blockIncrement="1" max="255" min="0" />
          <Label text="Saturation Stop" />
-         <Slider fx:id="saturationStop" blockIncrement="1" max="255" min="0" value="255.0" />
+         <Slider fx:id="saturationEnd" blockIncrement="1" max="255" min="0" value="250.0" />
          <Label text="Value Start" />
-         <Slider fx:id="valueStart" blockIncrement="1" max="255" min="0" value="50" />
+         <Slider fx:id="valueStart" blockIncrement="1" max="255" min="0" />
          <Label text="Value Stop" />
-         <Slider fx:id="valueStop" blockIncrement="1" max="255" min="0" value="255" />
+         <Slider fx:id="valueEnd" blockIncrement="1" max="255" min="0" value="255" />
       </VBox>
    </right>
    <center>
@@ -35,10 +35,10 @@
          <padding>
             <Insets left="10" right="10" />
          </padding>
-         <ImageView fx:id="originalFrame" />
+         <ImageView fx:id="originalImageView" />
          <VBox alignment="CENTER" spacing="5">
-            <ImageView fx:id="maskImage" />
-            <ImageView fx:id="morphImage" />
+            <ImageView fx:id="maskImageView" />
+            <ImageView fx:id="morphImageView" />
          </VBox>
       </HBox>
    </center>
@@ -50,6 +50,8 @@
          <Button fx:id="cameraButton" alignment="center" onAction="#startCamera" text="Start camera" />
          <Separator />
          <Label fx:id="hsvCurrentValues" />
+         <Slider fx:id="erodeNum" blockIncrement="1.0" majorTickUnit="1.0" max="5.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" />
+         <Slider fx:id="dilateNum" blockIncrement="1.0" majorTickUnit="1.0" max="5.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" />
       </VBox>
    </bottom>
 </BorderPane>
