@@ -48,6 +48,7 @@
             <Insets bottom="25" left="25" right="25" top="25" />
          </padding>
          <Button fx:id="cameraButton" alignment="center" onAction="#startCamera" text="Start camera" />
+         <Button mnemonicParsing="false" onAction="#calibrateInitial" text="Calibrate" />
          <Separator />
          <Label fx:id="hsvCurrentValues" />
          <Slider fx:id="erodeNum" blockIncrement="1.0" majorTickUnit="1.0" max="5.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" snapToTicks="true" />
