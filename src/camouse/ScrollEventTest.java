@@ -19,9 +19,17 @@ public class ScrollEventTest {
         this.initialY = y;
     }
 
-    public void singleClick(){
+    public void leftClickPress(){
         this.robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+    }
+
+    public void leftClickRelease(){
         this.robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+    }
+
+    public void singleClick(){
+        leftClickPress();
+        leftClickRelease();
     }
 
     public void doubleClick(){
