@@ -1,9 +1,12 @@
+package camouse;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
 public class ScrollEventTest {
     private static Robot robot;
-    private static Point p;
+    //private static Point p;
+    private static int initialX;
+    private static int initialY;
 
     public static void main(String[] args){
         {
@@ -17,6 +20,14 @@ public class ScrollEventTest {
         }
         robot.delay(5000);
         scrollDown();
+        scrollDown();
+        scrollDown();
+        scrollDown();
+    }
+
+    public ScrollEventTest(int x, int y){
+        this.initialX = x;
+        this.initialY = y;
     }
 
     public static void singleClick(){
@@ -35,7 +46,6 @@ public class ScrollEventTest {
     }
 
     public static void scrollDown(){
-        robot.delay(1000);
         robot.mouseWheel(1);
     }
 
@@ -44,7 +54,8 @@ public class ScrollEventTest {
     }
 
     public static void mouseMovement(int differenceX, int differenceY){
-        p = MouseInfo.getPointerInfo().getLocation();
-        robot.mouseMove(p.x+differenceX, p.y+differenceY);
+        //p = MouseInfo.getPointerInfo().getLocation();
+        //robot.mouseMove(p.x+differenceX, p.y+differenceY);
+        robot.mouseMove(initialX+differenceX, initialY+differenceY);
     }
 }
