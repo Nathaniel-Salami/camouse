@@ -30,6 +30,13 @@ public class CamouseController {
     private static final double SMALLEST_AREA = 0;
     private static final int THUMB = 0;
     private static final int INDEX_FINGER = 1;
+    private static final float cameraX = 640;
+    private static final float cameraY = 460;
+
+    private long theTime;
+    private long timeElapsed;
+
+    private boolean isClicking;
 
     //member vars
     private Mat currentFrame;
@@ -81,10 +88,12 @@ public class CamouseController {
     private VideoCapture capture = new VideoCapture();
     // a flag to change the button behavior
     private boolean cameraActive;
+    private TempMain tempMain;
 
     // property for object binding
     private ObjectProperty<String> hsvValuesProp;
 
+    public boolean isCalibrated = false;
     /*
     PUBLIC API
      */
@@ -106,11 +115,19 @@ public class CamouseController {
 
     @FXML
     private void calibrateInitial(){
-        initialPosition[INDEX_FINGER] = currentPosition[INDEX_FINGER].clone();
-        if(isThumbExtended()){
-            initialPosition[THUMB] = currentPosition[THUMB].clone();
+        if(this.cameraActive){
+            initialPosition[INDEX_FINGER] = currentPosition[INDEX_FINGER].clone();
+            if(isThumbExtended()){
+                initialPosition[THUMB] = currentPosition[THUMB].clone();
+            }
+            /*tempMain.init[0]= (float)(initialPosition[INDEX_FINGER].x);
+            tempMain.init[0]= (float)(float)(initialPosition[INDEX_FINGER].y);*/
+            tempMain = new TempMain((float)(initialPosition[INDEX_FINGER].x), (float)(initialPosition[INDEX_FINGER].y),cameraX,cameraY);
+            System.out.println("INITIAL: " + initialPosition[INDEX_FINGER]);
+            isCalibrated = true;
+        }else{
+            System.err.println("ERROR! Please activate the mouse before calibration");
         }
-        System.out.print("INITIAL: " + initialPosition[INDEX_FINGER]);
     }
 
     @FXML
@@ -118,6 +135,7 @@ public class CamouseController {
         // bind a text property with the string containing the current range of
         // HSV values for object detection
         hsvValuesProp = new SimpleObjectProperty<>();
+
         this.hsvCurrentValues.textProperty().bind(hsvValuesProp);
 
         // set a fixed width for all the image to show and preserve image ratio
@@ -160,6 +178,14 @@ public class CamouseController {
             // stop the timer
             this.stopAcquisition();
         }
+
+        //detect click
+       //i(!isThumbExtended() && !isClicking){
+            //pointer
+            //isClicking = true;
+            //System.out.println("POINTING");
+            //theTime = System.nanoTime();
+        //
     }
 
 
@@ -336,7 +362,83 @@ public class CamouseController {
             depths.add(depth);
         }
 
+        if(isCalibrated) {
+            //tempMain.update((float) (currentPosition[INDEX_FINGER].x), (float) (currentPosition[INDEX_FINGER].y));
+
+            ScrollEventTest scrollTest = new ScrollEventTest((float)(initialPosition[INDEX_FINGER].x), (float)(initialPosition[INDEX_FINGER].y));
+            float[] diff = scale();
+            scrollTest.mouseMovement(diff[0], diff[1]);
+
+            if(!isThumbExtended()) {
+                cases();
+            }
+        }
         //reduceFingerTips(frame);
+    }
+
+    private void cases(){
+        isClicking = false;
+
+        if(!isThumbExtended() && !isClicking){
+            //pointer
+            isClicking = true;
+            //System.out.println("POINTING");
+            theTime = System.nanoTime();
+        }
+        Long currentTime = System.nanoTime();
+        timeElapsed = currentTime - theTime;
+
+        System.out.println("Time Elapsed: " + timeElapsed);
+
+        if(timeElapsed < 600000000 && isThumbExtended()){
+            System.out.println("left click");
+            isClicking=false;
+        }else if((timeElapsed > 600000000 && timeElapsed < 2000000000) && isThumbExtended()) {
+            System.out.println("right click");
+            isClicking=false;
+        }else if(timeElapsed>2000000000 && !isThumbExtended()){
+            System.out.println("drag");
+        }else{
+            isClicking=false;
+            return;
+        }
+
+        /*if (timeElapsed > 2000000000) {
+            System.out.println("drag");
+        }
+            else if(timeElapsed > 600000000) {
+            System.out.println("right click");
+        }
+        else {
+            System.out.println("left click");
+        }*/
+
+
+        /*if(isThumbExtended() && isClicking){
+            Long timeEnd = System.nanoTime();
+            isClicking = false;
+        }
+        else{
+            //if (system)
+            //System.out.println("OTHER")
+
+        }*/
+    }
+
+    private float[] scale(){
+        float[] diff = new float[2];
+        float iX = (float) initialPosition[INDEX_FINGER].x;
+        float iY = (float) initialPosition[INDEX_FINGER].y;
+        float cX = (float)currentPosition[INDEX_FINGER].x;
+        float cY = (float)currentPosition[INDEX_FINGER].y;
+
+        //float diffX = (float)(initialPosition[INDEX_FINGER].x)-(float)(currentPosition[INDEX_FINGER].x);
+        //float diffY =(float)(initialPosition[INDEX_FINGER].y)-(float)(currentPosition[INDEX_FINGER].y);
+
+        diff[0] = (cX - iX)*tempMain.scale[0];
+        diff[1] = (cY - iY)*tempMain.scale[1];
+
+        return diff;
     }
 
     private void reduceFingerTips(Mat frame) {
