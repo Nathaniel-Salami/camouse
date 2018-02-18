@@ -32,11 +32,18 @@ public class TempMain {
 	
 	public TempMain(float x, float y, float camX, float camY) {
 		
-		iX = iY = 0;
-		tX = tY = 0;
-		cX = cY = 0;
+		iX = 0;
+				iY = 0;
+		tX = 0;
+				tY = 0;
+		cX = 0;
+				cY = 0;
 		
-		screenRez = camRez = scale = negligible = init = new float[2];
+		screenRez = new float[2];
+				camRez = new float[2];
+				scale = new float[2];
+				negligible = new float[2];
+				init = new float[2];
 		
 		dangerMouse = new ScrollEventTest(x, y);
 		
