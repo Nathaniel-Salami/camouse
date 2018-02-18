@@ -39,7 +39,7 @@ Fist for scrolling:
 <br/>
 <br/>
 Methods:<br/>
-Wear black glove<br/>
+Wear black glove and surround the thumb and index finger with tape that's colored pink<br/>
 Convert image to HSV (capture only black objects)<br/>
 Contour detect in order to find largest surface area (which will - hopefully - be the glove)<br/>
 Find valleys and mountains of the hand

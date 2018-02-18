@@ -1,50 +1,59 @@
+package camouse;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
 public class ScrollEventTest {
-    private static Robot robot;
-    private static Point p;
+    private Robot robot;
+    //private static Point p;
+    private int initialX;
+    private int initialY;
 
-    public static void main(String[] args){
-        {
-            try {
-                robot = new Robot();
-                System.out.println("Here");
-            } catch (AWTException e) {
-                System.out.println("Error");
-                e.printStackTrace();
-            }
+    public ScrollEventTest(float x, float y){
+        try {
+            this.robot = new Robot();  
+        } catch (AWTException e) {
+            e.printStackTrace();
         }
-        robot.delay(5000);
-        scrollDown();
+        
+        this.initialX = (int)x;
+        this.initialY = (int)y;
     }
 
-    public static void singleClick(){
-        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+    public void leftClickPress(){
+        this.robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
     }
 
-    public static void doubleClick(){
+    public void leftClickRelease(){
+        this.robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+    }
+
+    public void singleClick(){
+        leftClickPress();
+        leftClickRelease();
+    }
+
+    public void doubleClick(){
         singleClick();
         singleClick();
     }
 
-    public static void rightClick(){
-        robot.mousePress(InputEvent.BUTTON3_DOWN_MASK);
-        robot.mouseRelease(InputEvent.BUTTON3_DOWN_MASK);
+    public void rightClick(){
+        this.robot.mousePress(InputEvent.BUTTON3_DOWN_MASK);
+        this.robot.mouseRelease(InputEvent.BUTTON3_DOWN_MASK);
     }
 
-    public static void scrollDown(){
-        robot.delay(1000);
-        robot.mouseWheel(1);
+    public void scrollDown(){
+        this.robot.mouseWheel(1);
     }
 
-    public static void scrollUp(){
-        robot.mouseWheel(-1);
+    public void scrollUp(){
+        this.robot.mouseWheel(-1);
     }
 
-    public static void mouseMovement(int differenceX, int differenceY){
-        p = MouseInfo.getPointerInfo().getLocation();
-        robot.mouseMove(p.x+differenceX, p.y+differenceY);
+    public void mouseMovement(float differenceX, float differenceY){
+        //p = MouseInfo.getPointerInfo().getLocation();
+        //robot.mouseMove(p.x+differenceX, p.y+differenceY);
+        this.robot.mouseMove((int)(initialX+differenceX), (int)(initialY+differenceY));
     }
+    
 }
