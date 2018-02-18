@@ -10,7 +10,9 @@ public class ScrollEventTest {
 
     public ScrollEventTest(){
         try {
-            this.robot = new Robot();  
+            this.robot = new Robot();
+            robot.setAutoWaitForIdle(true);
+            robot.setAutoDelay(50);
         } catch (AWTException e) {
             e.printStackTrace();
         }
